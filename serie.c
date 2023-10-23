@@ -1,7 +1,13 @@
 #include <stdio.h>  /* fprintf(), sprintf(), stderr */
 #include <stdlib.h> /* system() */
 #include <string.h> /* strcat() */
+#ifdef WIN32
+#include <io.h> /* unlink() */
+#define UNLINK _unlink
+#else
 #include <unistd.h> /* unlink() */
+#define UNLINK unlink
+#endif
 
 int sys(char *command)
 {
@@ -62,11 +68,11 @@ void search2d()
 				    sys(command);
 
 				    /* Löschen des Indexes */
-				    unlink(indexname);
+				    UNLINK(indexname);
 				}
 			}
 		/* Löschen des Testdatensatzes */
-		unlink(featurename);
+		UNLINK(featurename);
 	    }
 }
 

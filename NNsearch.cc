@@ -2,6 +2,8 @@
 
 #include "VPBaum.hh"
 
+#include <stdlib.h>
+
 void usageMessage()
 {
   fprintf(stderr, "NNsearch - Suche nach den nächsten Nachbarn,\n"
@@ -49,6 +51,10 @@ int main(int argc, char **argv)
 
   argc--; argv++;
 
+  VPBaum baum(*argv);
+
+  argc--; argv++;
+
   Merkmal *suche;
   MerkmalsMenge menge(*argv++); argc--;
 
@@ -67,7 +73,7 @@ int main(int argc, char **argv)
   fprintf(stderr, "Starte Suche...\n");
 
   // Berechnen aller Abstände
-  for (int i = 0; i < 
+  //for (int i = 0; i < 
 
   return 0;
 }

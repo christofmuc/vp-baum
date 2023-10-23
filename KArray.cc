@@ -3,7 +3,7 @@
 KArray::KArray(int size)
 {
   entfernungen = new double[size];
-  merkmale     = new (Merkmal *)[size];
+  merkmale     = new Merkmal*[size];
   num          = 0;
   k            = size;
 }

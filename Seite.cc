@@ -6,7 +6,7 @@
 Seite::Seite(int groesse)
 {
   this->groesse = groesse;
-  seite = malloc(groesse);
+  seite = (uint8_t *) malloc(groesse);
   memset(seite, 0, groesse);
   pos   = seite;
 }
@@ -14,7 +14,7 @@ Seite::Seite(int groesse)
 Seite::Seite(int g, FILE *f, long position) 
 {
   groesse = g;
-  seite = malloc(groesse);
+  seite = (uint8_t*)malloc(groesse);
   pos   = seite;
   fseek(f, position, SEEK_SET);
   fread(seite, groesse, 1, f);
@@ -27,7 +27,7 @@ Seite::~Seite()
 
 void *Seite::lesen(int size)
 {
-  void *aktuell = pos;
+  uint8_t* aktuell = pos;
   pos += size;
   return aktuell;
 }

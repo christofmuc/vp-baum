@@ -19,7 +19,7 @@ MerkmalsMenge::MerkmalsMenge(char *filename)
 {
   FILE *file = fopen(filename, "r");
   fscanf(file, "%d %d", &anzahl, &dimension);
-  merkmal = new (Merkmal *)[anzahl];
+  merkmal = new Merkmal*[anzahl];
 
   for (int i = 0; i < anzahl; i++)
     merkmal[i] = new Merkmal(file, dimension);
@@ -31,7 +31,7 @@ MerkmalsMenge::MerkmalsMenge(int n, int dim)
 
   anzahl     = n;
   dimension  = dim;
-  merkmal    = new (Merkmal *)[n];
+  merkmal    = new Merkmal *[n];
 
   for (i = 0; i < n; i++)
     {

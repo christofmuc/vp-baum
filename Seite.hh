@@ -2,12 +2,13 @@
 #define _Seite_hh
 
 #include <stdio.h> // FILE *
+#include <cstdint> // uint8_t
 
 class Seite
 {
 private:
-  void *seite;
-  void *pos;
+  uint8_t *seite;
+  uint8_t *pos;
   int   groesse;
 
 public:

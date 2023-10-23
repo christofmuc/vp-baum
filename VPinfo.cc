@@ -1,5 +1,7 @@
 #include "VPBaum.hh"
 
+#include <stdlib.h>
+
 void usageMessage()
 {
   fprintf(stderr,"VPinfo - zeigt Informationen über eine VPBaum-Datei an,\n"
