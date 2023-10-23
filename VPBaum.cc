@@ -75,6 +75,8 @@ VPBaum::VPBaum(char *filename, Mass *mass, int dimension, int seitengroesse)
   info.minsigma          = 0.0;
   info.knotenzahl        = 0;
   info.blattzahl         = 0;
+	info.merkmalzahl = 0;
+	info.massid = 0;
   this->mass             = mass;
 
   // Statusseite
@@ -104,6 +106,8 @@ VPBaum::VPBaum(char *filename, Mass *mass, int dimension, int proBlatt,
   info.minsigma          = 0.0;
   info.knotenzahl        = 0;
   info.blattzahl         = 0;
+	info.merkmalzahl = 0;
+	info.massid = 0;
   this->mass             = mass;
 
   // Man sollte wenigstens ein Element speichern können
