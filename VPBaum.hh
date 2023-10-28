@@ -14,10 +14,11 @@
 
 class VPBaum
 {
-private:
+public:
   FILE *baum;
 
-  int magic = 0x020870;
+private:
+    int magic = 0x020870;
   Mass *mass;
 
   int  T, B, K, P;

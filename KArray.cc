@@ -10,8 +10,8 @@ KArray::KArray(int size)
 
 KArray::~KArray()
 {
-  delete entfernungen;
-  delete merkmale;
+  delete[] entfernungen;
+  delete[] merkmale;
 }
 
 double KArray::getMaxDist()

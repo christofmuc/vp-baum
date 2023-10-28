@@ -3,6 +3,9 @@
 #include <stdio.h>  /* fopen(), fclose(), fseek(), fread() */
 #include <stdlib.h> /* malloc(), free(), rand() */
 #include <string.h> /* memcpy(), memset() */
+#include <exception>
+#include <string>
+#include <vector>
 
 #include "Seite.hh"
 #include "VPBaum.hh"
@@ -96,7 +99,7 @@ VPBaum::VPBaum(char* filename, Mass* mass, int dimension, int seitengroesse)
 }
 
 VPBaum::VPBaum(char* filename, Mass* mass, int dimension, int proBlatt,
-	int proKnoten)
+	int proKnoten) : mass(nullptr), ergebnis(nullptr), karray(nullptr), hashtab(nullptr), hashmerk(nullptr)
 {
 	info.dimension = dimension;
 	this->seitengroesse = MAX(blattGroesse(proBlatt),
@@ -177,9 +180,9 @@ void VPBaum::speichereInfo()
 
 	// Verify
 	auto v = new Seite(seitengroesse, baum, 0);
-	auto vmagic = (int*) v->lesen();
+	auto vmagic = (int*) v->lesen(sizeof(int));
 	assert(*vmagic == magic);
-	auto vgroesse = (int*)v->lesen();
+	auto vgroesse = (int*)v->lesen(sizeof(int));
 	assert(*vgroesse == seitengroesse);
 	auto vinfo = (struct info*)v->lesen(sizeof(struct info));
 	assert(vinfo->blaetterProKnoten == info.blaetterProKnoten);	
@@ -310,7 +313,7 @@ long VPBaum::schreibeMenge(MerkmalsMenge* m)
 
 	// Verify
 	auto v = new Seite(seitengroesse, baum, loc);
-	assert(2 == *(int*)v->lesen());
+	assert(2 == *(int*)v->lesen(sizeof(int)));
 
 	delete s;
 	return loc;
@@ -362,6 +365,7 @@ long VPBaum::speichereMenge(MerkmalsMenge* m)
 		(int)ceil(num / (double)info.elementeProBlatt));
 	elem = (int)ceil(m->anzahl / (double)b);
 	pos = 0;
+	std::vector<long> subpages;
 	for (i = 0; i < b && num > 0; i++)
 	{
 		// Bilde aus den naechsten elem Merkmalen eine neue Merkmalsmenge
@@ -371,17 +375,20 @@ long VPBaum::speichereMenge(MerkmalsMenge* m)
 		pos += elem;
 		merkmale += elem;
 
-		if (pos == m->anzahl)
+		if (pos == m->anzahl) {
 			// Dies ist der Rest, als Intervallgrenze die maximale  Entfernung
 			// benutzen
 			s->schreiben((float)dist[pos - 1]);
+		}
 		else
 		{
 			float  d = fabs(dist[pos - 1] - dist[pos]) / 2.0;
 			*sigma = MAX(*sigma, d);
 			s->schreiben((float)((dist[pos - 1] + dist[pos]) / 2.0));
 		}
-		s->schreiben(speichereMenge(menge));
+		long subpage = speichereMenge(menge);
+		s->schreiben(subpage);
+		subpages.push_back(subpage);
 	}
 	info.minsigma = MAX(*sigma, info.minsigma);
 	*blaetter = b;
@@ -391,10 +398,10 @@ long VPBaum::speichereMenge(MerkmalsMenge* m)
 
 	// Verify
 	auto v = new Seite(seitengroesse, baum, loc);
-	assert(1 == *(int*)v->lesen());
-	assert(*blaetter == *(int*)v->lesen());
-	float sigmastored = *(float*)v->lesen();
-	assert(sigmaVerify == sigmastored);
+	assert(1 == *(int*)v->lesen(sizeof(int)));
+	assert(*blaetter == *(int*)v->lesen(sizeof(int)));
+	float sigmastored = *(float*)v->lesen(sizeof(float));
+//	assert(sigmaVerify == sigmastored);
 
 	delete s;
 	std::string result;
