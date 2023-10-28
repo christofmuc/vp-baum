@@ -174,6 +174,17 @@ void VPBaum::speichereInfo()
 	s.schreiben(&info, sizeof(struct info));
 
 	s.speichern(baum, 0);
+
+	// Verify
+	auto v = new Seite(seitengroesse, baum, 0);
+	auto vmagic = (int*) v->lesen();
+	assert(*vmagic == magic);
+	auto vgroesse = (int*)v->lesen();
+	assert(*vgroesse == seitengroesse);
+	auto vinfo = (struct info*)v->lesen(sizeof(struct info));
+	assert(vinfo->blaetterProKnoten == info.blaetterProKnoten);	
+	assert(vinfo->merkmalzahl== info.merkmalzahl);	
+	assert(vinfo->massid == info.massid);	
 }
 
 void VPBaum::baumInfo()
@@ -297,6 +308,10 @@ long VPBaum::schreibeMenge(MerkmalsMenge* m)
 	loc = s->anhaengen(baum);
 	info.blattzahl++;
 
+	// Verify
+	auto v = new Seite(seitengroesse, baum, loc);
+	assert(2 == *(int*)v->lesen());
+
 	delete s;
 	return loc;
 }
@@ -374,8 +389,19 @@ long VPBaum::speichereMenge(MerkmalsMenge* m)
 	loc = s->anhaengen(baum);
 	info.knotenzahl++;
 
-	delete s;
+	// Verify
+	auto v = new Seite(seitengroesse, baum, loc);
+	assert(1 == *(int*)v->lesen());
+	assert(*blaetter == *(int*)v->lesen());
+	float sigmastored = *(float*)v->lesen();
+	assert(sigmaVerify == sigmastored);
 
+	delete s;
+	std::string result;
+	for (long page : subpages) {
+		result += " " + std::to_string(page);
+	}
+	printf("Generated page %d (%s)\n", loc, result.c_str());
 	return loc;
 }
 
