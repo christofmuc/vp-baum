@@ -22,6 +22,10 @@ VPBaum::VPBaum(char* filename)
 
 	// Oeffnen eines existierenden VP-Baumes auf der Platte
 	baum = fopen(filename, "r+");
+	if (baum == NULL)
+	{
+		throw std::exception("Failed to open file");
+	}
 
 	fread(&id, sizeof(int), 1, baum);
 	if (id != magic)
