@@ -592,3 +592,23 @@ void VPBaum::jetztBekannt(long pos, Merkmal* punkt)
 {
 	istBekannt(pos, punkt);
 }
+
+
+void vp_search(char* indexname, float* params, int dim)
+{
+	Merkmal* suche;
+	VPBaum   baum(indexname);
+
+	// Erzeugen des Punktes, dessen NN gesucht wird
+	suche = new Merkmal(0, baum.info.dimension);
+	for (int i = 0; i < suche->dimension; i++)
+	{
+		suche->werte[i] = params[i];
+	}
+
+	// Die eigentliche NN-Suche
+	float sigma;
+	sigma = baum.info.minsigma;
+
+	baum.startNNSuche(suche, &sigma);
+}

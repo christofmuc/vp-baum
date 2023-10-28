@@ -19,4 +19,7 @@ public:
   void speichern(char *filename);
 };
 
+extern "C" void test_set(int number, int dim, char* filename);
+extern "C" void vp_generate(char* features, char* filename, int branch, int elements);
+
 #endif

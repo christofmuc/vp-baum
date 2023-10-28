@@ -9,76 +9,55 @@
 #define UNLINK unlink
 #endif
 
-int sys(char *command)
-{
-    int error;
-
-    fprintf(stdout, "%s\n", command);
-    error = system(command);
-
-    if (error != 0)
-	{
-	    fprintf(stdout, "Failed with %d\n", error);
-	    fprintf(stderr, "\n");
-	    fflush(stderr);
-	    return 0;
-	}
-    return 1;
-}
-
 void search2d()
 {
-    char featurename[512];
-    char indexname[512];
-    char command[512];
-    char number[10];
-    int num, dim, d, branch, points;
+	char featurename[512];
+	char indexname[512];
+	char number[10];
+	int num, dim, d, branch, points;
 
-    fprintf(stderr, "# Merkmalanzahl Dimension Verzweigung Blattgröße "
-	    "Knotenzahl Blattzahl Dateigröße "
-	    "Versuche Knoten Blätter Punkte\n");
+	fprintf(stderr, "# Merkmalanzahl Dimension Verzweigung Blattgröße "
+		"Knotenzahl Blattzahl Dateigröße "
+		"Versuche Knoten Blätter Punkte\n");
 
-    for (num = 1000; num <= 125000; num *= 5)
-	for (dim = 2; dim < 18; dim += 6)
-	    {
-		sprintf(featurename, "/tmp/TEST.%d.%d", num, dim);
-		sprintf(command, "testset %s %d %d", featurename, num, dim);
-		sys(command);
+	for (num = 1000; num <= 125000; num *= 5)
+		for (dim = 2; dim < 18; dim += 6)
+		{
+			sprintf(featurename, "tmp/TEST.%d.%d", num, dim);
+			test_set(num, dim, featurename);
 
-		for (branch = 2; branch <= 128; branch <<= 1)
-		    for (points = 10; points <= 640; points *= 2)
-			{
-			    sprintf(indexname, "/tmp/TEST.INDEX.%d.%d.%d.%d",
-				    num, dim, branch, points);
-			    sprintf(command, "VPgenerate %s %s %d %d", 
-				    featurename, indexname, branch, points);
-			    fprintf(stderr, "%d %d %d %d ",
-				    num, dim, branch, points);
-			    fflush(stderr);
-
-			    if (sys(command))
+			for (branch = 2; branch <= 128; branch <<= 1)
+				for (points = 10; points <= 640; points *= 2)
 				{
-				    sprintf(command, "VPsearch %s ", indexname);
-				    for (d = 0; d < dim; d++)
-					{
-					    float pos = 0.5;
-					    sprintf(number, "%f ", pos);
-					    strcat(command, number); 
-					}
-				    sys(command);
+					sprintf(indexname, "tmp/TEST.INDEX.%d.%d.%d.%d",
+						num, dim, branch, points);
+					fprintf(stderr, "%d %d %d %d ",
+						num, dim, branch, points);
+					fflush(stderr);
 
-				    /* Löschen des Indexes */
-				    UNLINK(indexname);
+					vp_generate(featurename, indexname, branch, points);
+
+					
+					float* params = malloc(sizeof(float) * dim);
+					for (d = 0; d < dim; d++)
+					{
+						float pos = 0.5;
+						params[d] = pos;
+					}
+					vp_search(indexname, params, dim);
+					free(params);
+
+					/* Löschen des Indexes */
+					UNLINK(indexname);
 				}
-			}
-		/* Löschen des Testdatensatzes */
-		UNLINK(featurename);
-	    }
+			/* Löschen des Testdatensatzes */
+			UNLINK(featurename);
+		}
 }
 
 int main()
 {
-    search2d();
+	search2d();
 
-    return 0;
+	return 0;
 }

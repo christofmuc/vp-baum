@@ -87,4 +87,6 @@ public:
   void baumInfo();
 };
 
+extern "C" void vp_search(char *indexname, float *params, int dim);
+
 #endif

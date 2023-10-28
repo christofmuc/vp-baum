@@ -2,6 +2,8 @@
 
 #include "MerkmalsMenge.hh"
 
+#include "VPBaum.hh"
+
 // MerkmalsMenge::MerkmalsMenge(int n)
 // {
 //   anzahl  = n;
@@ -57,4 +59,41 @@ void MerkmalsMenge::speichern(char *filename)
 MerkmalsMenge::~MerkmalsMenge()
 {
   delete merkmal;
+}
+
+void test_set(int number, int dim, char *filename)
+{
+    srand(1);
+    MerkmalsMenge m(number, dim);
+    m.speichern(filename);
+}
+
+
+void vp_generate(char *features, char *filename, int branch, int elements)
+{
+    srand(1);
+
+    fprintf(stdout, "Lade Merkmalsdatei\n");
+    MerkmalsMenge* m = new MerkmalsMenge(features);
+
+    Mass* e = new EuklidMass();
+
+    fprintf(stdout, "Erzeuge Baum\n");
+
+    auto baum = new VPBaum(filename, e, m->dimension, elements, branch);
+    
+    {
+        /* Nur die Seitengröße ist angegeben */
+    //    pagesize = atoi(*argv++);
+        //baum = new VPBaum(filename, e, m->dimension, pagesize);
+    }
+
+    long start = baum->speichereMenge(m);
+    baum->info.startSeite = start;
+
+    fprintf(stderr, "%d %d %d ", baum->info.knotenzahl, baum->info.blattzahl,
+        baum->info.startSeite + baum->seitengroesse);
+    fflush(stdout);
+
+    delete baum;
 }

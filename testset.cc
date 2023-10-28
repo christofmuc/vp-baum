@@ -26,9 +26,5 @@ int main(int argc, char **argv)
   int   number   = atoi(*argv++);
   int   dim      = atoi(*argv++);
 
-  srand(1);
-
-  MerkmalsMenge m(number, dim);
-
-  m.speichern(filename);
+  test_set(number, dim, filename);
 }

@@ -32,35 +32,18 @@ int main(int argc, char **argv)
 
   srand(1);
 
-  fprintf(stdout, "Lade Merkmalsdatei\n");
-  MerkmalsMenge *m = new MerkmalsMenge(features);
-
-  Mass *e = new EuklidMass();
-
-  fprintf(stdout, "Erzeuge Baum\n");
-
-  if (argc==5)
-    {
+  if (argc == 5)
+  {
       /* Verzweigungsgrad und Speicherkapazität der Blätter sind angegeben */
-      branch    = atoi(*argv++);
-      elements  = atoi(*argv++);
-      baum = new VPBaum(filename, e, m->dimension, elements, branch);
-    }
+      branch = atoi(*argv++);
+      elements = atoi(*argv++);
+  }
   else
-    {
+  {
       /* Nur die Seitengröße ist angegeben */
-      pagesize  = atoi(*argv++);
-      baum = new VPBaum(filename, e, m->dimension, pagesize);
-    }
-
-  long start = baum->speichereMenge(m);
-  baum->info.startSeite = start;
-
-  fprintf(stderr, "%d %d %d ", baum->info.knotenzahl, baum->info.blattzahl,
-	  baum->info.startSeite + baum->seitengroesse);
-  fflush(stdout);
-
-  delete baum;
+      pagesize = atoi(*argv++);
+  }
+  vp_generate(features, filename, elements, branch);
 
   fprintf(stdout, "Fertig\n");
 
