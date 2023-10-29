@@ -25,6 +25,7 @@ MerkmalsMenge::MerkmalsMenge(char *filename)
 
   for (int i = 0; i < anzahl; i++)
     merkmal[i] = new Merkmal(file, dimension);
+  fclose(file);
 }
 
 MerkmalsMenge::MerkmalsMenge(int n, int dim)
