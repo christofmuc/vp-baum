@@ -6,7 +6,8 @@ Mass.cc Mass.hh
 Merkmal.cc Merkmal.hh
 MerkmalsMenge.cc MerkmalsMenge.hh
 
-Seite.cc Seite.hh
+#Seite.cc
+Seite.hh
 VPBaum.cc VPBaum.hh
 Makefile
 )
