@@ -6,6 +6,7 @@
 #include <exception>
 #include <string>
 #include <vector>
+#include <errno.h>
 
 #include "Seite.hh"
 #include "VPBaum.hh"
@@ -24,7 +25,7 @@ VPBaum::VPBaum(char* filename)
 	initHash(10000);
 
 	// Oeffnen eines existierenden VP-Baumes auf der Platte
-	baum = fopen(filename, "r+");
+	baum = fopen(filename, "rb+");
 	if (baum == NULL)
 	{
 		throw std::exception("Failed to open file");
@@ -94,7 +95,7 @@ VPBaum::VPBaum(char* filename, Mass* mass, int dimension, int seitengroesse)
 	assert(info.blaetterProKnoten >= 2);
 
 	// Und erzeugen der Datei
-	baum = fopen(filename, "w+");
+	baum = fopen(filename, "wb+");
 	speichereInfo();
 }
 
@@ -123,7 +124,10 @@ VPBaum::VPBaum(char* filename, Mass* mass, int dimension, int proBlatt,
 	assert(info.blaetterProKnoten >= 2);
 
 	// Und Erzeugen der Datei
-	baum = fopen(filename, "w+");
+	baum = fopen(filename, "wb+");
+	if (baum == nullptr) {
+		printf("Error: %s\n", std::strerror(errno));
+	}
 	speichereInfo();
 }
 
