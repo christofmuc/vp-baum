@@ -342,9 +342,9 @@ long VPBaum::speichereMenge(MerkmalsMenge* m)
 	// Das passt nicht - also Split notwendig!
 	Seite* s = new Seite(seitengroesse);
 	assert(s != NULL);                     // Speicheranforderung klappt immer
-	blaetter = (int*)s->schreiben(1);    // Schreiben der Kennung 
-	sigma = (float*)s->schreiben(0);  // Schreiben der Anzahl
-	s->schreiben((float)0.0);             // Schreiben des minSigmas
+	s->schreiben(1);    // Schreiben der Kennung 
+	blaetter = (int*)s->schreiben(1);    // Schreiben der Anzahl
+	sigma = (float*)s->schreiben(0.0f);  // Schreiben des minSigmas
 
 	// Erst wird der Vantage Point bestimmt
 	vp = waehleVantagePoint(m);
