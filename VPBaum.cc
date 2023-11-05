@@ -21,7 +21,6 @@ VPBaum::VPBaum(char* filename)
 	int   id;
 	Seite* s;
 
-	karray = NULL;
 	initHash(10000);
 
 	// Oeffnen eines existierenden VP-Baumes auf der Platte
@@ -100,7 +99,7 @@ VPBaum::VPBaum(char* filename, Mass* mass, int dimension, int seitengroesse)
 }
 
 VPBaum::VPBaum(char* filename, Mass* mass, int dimension, int proBlatt,
-	int proKnoten) : mass(nullptr), ergebnis(nullptr), karray(nullptr), hashtab(nullptr), hashmerk(nullptr)
+	int proKnoten) : mass(nullptr), ergebnis(nullptr), hashtab(nullptr), hashmerk(nullptr)
 {
 	info.dimension = dimension;
 	this->seitengroesse = MAX(blattGroesse(proBlatt),
@@ -135,8 +134,6 @@ VPBaum::~VPBaum()
 {
 	delete hashtab;
 	delete hashmerk;
-
-	delete karray;
 
 	// Schreiben der Statusseite
 	speichereInfo();
@@ -439,7 +436,15 @@ Merkmal* VPBaum::startNNSuche(Merkmal* punkt, float* sigma)
 
 Merkmal* VPBaum::startKNNSuche(Merkmal* punkt, int k, float* sigma)
 {
+	KArray* karray = kNNSuche(punkt, k, sigma);
+	Merkmal *result = karray->nearestNeighbour();
+	delete karray;
+	return result;
+}
+
+KArray* VPBaum::kNNSuche(Merkmal* punkt, int k, float* sigma) {
 	T = K = B = P = 0;
+	KArray* karray{nullptr};
 	do
 	{
 		// Löschen des Ergebnisfeldes und Anlegen eines neuen
@@ -447,7 +452,7 @@ Merkmal* VPBaum::startKNNSuche(Merkmal* punkt, int k, float* sigma)
 		karray = new KArray(k);
 
 		// Start der Suche
-		suche(punkt, sigma, info.startSeite, KNN);
+		suche(punkt, sigma, info.startSeite, KNN, karray);
 
 		// Anpassen des Sigmas für den nächsten Versuch
 		*sigma *= 2;
@@ -459,12 +464,10 @@ Merkmal* VPBaum::startKNNSuche(Merkmal* punkt, int k, float* sigma)
 	//  fprintf(stderr,"Versuche, Knoten, Blätter, Punkte: ");
 	fprintf(stderr, "%d %d %d %d\n", T, K, B, P);
 	karray->print();
-	delete karray;
-
-	return karray->nearestNeighbour();
+	return karray;
 }
 
-void VPBaum::suche(Merkmal* punkt, float* sigma, long position, int MODE)
+void VPBaum::suche(Merkmal* punkt, float* sigma, long position, int MODE, KArray* karray /* = nullptr */)
 {
 	Merkmal* vp, * gefunden;
 	Merkmal* lokalesErgebnis = NULL;
@@ -500,7 +503,7 @@ void VPBaum::suche(Merkmal* punkt, float* sigma, long position, int MODE)
 
 			// Überprüfen, ob das Intervall in Frage kommt
 			if ((mu1 - *sigma < dist) && (dist <= mu2 + *sigma))
-				suche(punkt, sigma, neupos, MODE);
+				suche(punkt, sigma, neupos, MODE, karray);
 
 			mu1 = mu2;
 		}
@@ -510,7 +513,7 @@ void VPBaum::suche(Merkmal* punkt, float* sigma, long position, int MODE)
 		punkte = *((int*)s->lesen(sizeof(int)));
 
 		// Wurde diese Blatt bereits einmal bearbeitet?
-		lokalesErgebnis = istBekannt(position);
+		lokalesErgebnis = NULL; // istBekannt(position);
 		if (lokalesErgebnis == NULL)
 		{
 			// Nein, dann beginnt die Arbeit
@@ -568,7 +571,7 @@ void VPBaum::suche(Merkmal* punkt, float* sigma, long position, int MODE)
 	}
 
 	// Und die Seite wieder aus dem Speicher löschen
-	//  delete s;
+	delete s;
 	// Ups - geht nicht mehr wegen der Hashtabelle
 }
 

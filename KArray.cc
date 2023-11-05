@@ -1,5 +1,7 @@
 #include "KArray.hh"
 
+#include <assert.h>
+
 KArray::KArray(int size)
 {
   entfernungen = new double[size];
@@ -21,6 +23,12 @@ double KArray::getMaxDist()
   else
     return 1e6; // Kludge!!!
 }
+
+Merkmal* KArray::getItem(int index) const {
+    assert(index >= 0 && index < num);
+    return merkmale[index];
+}
+
 
 Merkmal *KArray::nearestNeighbour()
 {

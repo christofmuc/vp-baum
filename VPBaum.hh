@@ -19,13 +19,12 @@ public:
 
 private:
     int magic = 0x020870;
-  Mass *mass;
+  Mass *mass{nullptr};
 
   int  T, B, K, P;
 
-  Merkmal *ergebnis;
-  KArray  *karray;
-
+  Merkmal *ergebnis{ nullptr };
+  
   int calcProBlatt(int s);
   int calcProKnoten(int s);
   int blattGroesse(int speicher);
@@ -36,12 +35,12 @@ private:
 
   long schreibeMenge(MerkmalsMenge *m);
 
-  void suche(Merkmal *punkt, float *sigma, long position, int MODE);
+  void suche(Merkmal *punkt, float *sigma, long position, int MODE, KArray* karray = nullptr);
 
   // Die Hashtabelle, die bereits durchsuchte Blätter merkt
   int hashSize;
-  int *hashtab;
-  Merkmal **hashmerk;
+  int *hashtab{ nullptr };
+  Merkmal **hashmerk{ nullptr };
 
   void initHash(int size);
   Merkmal *istBekannt(long pos, Merkmal *punkt = NULL);
@@ -83,6 +82,7 @@ public:
 
   Merkmal *startNNSuche(Merkmal *punkt, float *sigma);
   Merkmal *startKNNSuche(Merkmal *punkt, int k, float *sigma);
+  KArray *kNNSuche(Merkmal *punkt, int k, float *sigma);
 
   void speichereInfo();
   void baumInfo();

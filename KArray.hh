@@ -18,6 +18,7 @@ public:
   void insert(Merkmal *merkmal, double dist);
 
   int getNum() { return num; };
+  Merkmal* getItem(int index) const;
 
   double getMaxDist();
   Merkmal *nearestNeighbour();

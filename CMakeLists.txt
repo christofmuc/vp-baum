@@ -13,6 +13,7 @@ Makefile
 )
 
 add_library(VPBaum ${SOURCES})
+target_include_directories(VPBaum PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
 add_executable(VPgenerate VPgenerate.cc)
 target_link_libraries(VPgenerate PRIVATE VPBaum)
