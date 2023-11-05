@@ -52,6 +52,33 @@ double CityblockMass::d(Merkmal *a, Merkmal *b)
   return summe;
 }
 
+DifferFeatureMass::DifferFeatureMass()
+{
+    id = DIFFERFEATURE;
+}
+
+double DifferFeatureMass::d(Merkmal* a, Merkmal* b)
+{
+    int    i;
+    double summe = 0.0;
+
+    assert(a != NULL);
+    assert(b != NULL);
+    assert(a->dimension == b->dimension);
+
+    // Für statistische Zwecke
+    D++;
+
+    for (i = 0; i < a->dimension; i++) {
+        if (a->werte[i] != b->werte[i]) {
+            summe += 1.0;
+        }
+    }
+
+    return summe;
+}
+
+
 MaximumsMass::MaximumsMass()
 {
   id = MAXIMUM;

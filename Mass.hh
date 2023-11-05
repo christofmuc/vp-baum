@@ -6,6 +6,7 @@
 #define EUKLID    1
 #define CITYBLOCK 2
 #define MAXIMUM   3
+#define DIFFERFEATURE 4
 
 class Mass
 {
@@ -29,6 +30,15 @@ public:
   CityblockMass();
   virtual double d(Merkmal *a, Merkmal *b);
 };
+
+
+class DifferFeatureMass : public Mass
+{
+public:
+	DifferFeatureMass();
+	virtual double d(Merkmal* a, Merkmal* b);
+};
+
 
 class MaximumsMass : public Mass
 {
