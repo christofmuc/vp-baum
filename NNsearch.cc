@@ -44,8 +44,6 @@ void distanzSort(double *dist, Merkmal **merkmal, int l, int r)
 
 int main(int argc, char **argv)
 {
-  float sigma;
-
   if (argc < 2)
     usageMessage();
 
