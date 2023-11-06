@@ -11,7 +11,8 @@ public:
   float   *werte;
 
   Merkmal(int sch, int dim);
-  Merkmal(int sch, int dim, float *w);
+  //Merkmal(int sch, int dim, float *w);
+  void setValues(float* w);
   Merkmal(FILE *file, int dim);
   ~Merkmal();
 

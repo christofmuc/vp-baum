@@ -7,12 +7,12 @@ Merkmal::Merkmal(int sch, int dim)
   werte      = new float[dim];
 }
 
-Merkmal::Merkmal(int sch, int dim, float *w)
+/*Merkmal::Merkmal(int sch, int dim, float* w)
 {
   schluessel = sch;
   dimension  = dim;
   werte      = w;
-}
+}*/
 
 Merkmal::Merkmal(FILE *file, int dim)
 {
@@ -21,6 +21,11 @@ Merkmal::Merkmal(FILE *file, int dim)
   werte     = new float[dimension];
   for (int i = 0; i < dim; i++)
     fscanf(file, "%f", &werte[i]);
+}
+
+void Merkmal::setValues(float* w) {
+    for (int i = 0; i < dimension; i++)
+        werte[i] = w[i];
 }
 
 Merkmal::~Merkmal()

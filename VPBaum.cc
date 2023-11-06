@@ -488,8 +488,8 @@ void VPBaum::suche(Merkmal* punkt, float* sigma, long position, int MODE, KArray
 		minsigma = *((float*)s->lesen(sizeof(float)));
 
 		// Jetzt den VantagePoint erzeugen
-		vp = new Merkmal(0, info.dimension,
-			(float*)s->lesen(sizeof(float) * info.dimension));
+		vp = new Merkmal(0, info.dimension);
+		vp->setValues((float*)s->lesen(sizeof(float) * info.dimension));
 
 		// Den Abstand unseres Suchpunktes zum VantagePoint berechnen
 		dist = mass->d(punkt, vp);
@@ -525,8 +525,8 @@ void VPBaum::suche(Merkmal* punkt, float* sigma, long position, int MODE, KArray
 			{
 				// Erzeugen des neuen Punktes
 				sch = *((int*)s->lesen(sizeof(int)));
-				gefunden = new Merkmal(sch, info.dimension, (float*)
-					s->lesen(sizeof(float) * info.dimension));
+				gefunden = new Merkmal(sch, info.dimension);
+				gefunden->setValues((float*) s->lesen(sizeof(float) * info.dimension));
 
 				// Berechnen der Distanz zum Suchpunkt
 				P++;
