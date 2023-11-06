@@ -11,6 +11,8 @@
 #include "Seite.hh"
 #include "VPBaum.hh"
 
+#include <spdlog/spdlog.h>
+
 #undef NDEBUG
 
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
@@ -33,7 +35,7 @@ VPBaum::VPBaum(char* filename)
 	fread(&id, sizeof(int), 1, baum);
 	if (id != magic)
 	{
-		fprintf(stderr, "Dies ist keine VP-Baum-Datei!\n");
+		spdlog::error("Dies ist keine VP-Baum-Datei!");
 		exit(-1);
 	}
 	fread(&seitengroesse, sizeof(int), 1, baum);
@@ -66,7 +68,7 @@ VPBaum::VPBaum(char* filename)
 		mass = new MaximumsMass();
 		break;
 	default:
-		fprintf(stderr, "Maßtyp %d nicht bekannt!\n", info.massid);
+		spdlog::error("Maßtyp {} nicht bekannt!\n", info.massid);
 		exit(-1);
 	}
 }
@@ -125,7 +127,7 @@ VPBaum::VPBaum(char* filename, Mass* mass, int dimension, int proBlatt,
 	// Und Erzeugen der Datei
 	baum = fopen(filename, "wb+");
 	if (baum == nullptr) {
-		printf("Error: %s\n", std::strerror(errno));
+		spdlog::error("Error: {}", std::strerror(errno));
 	}
 	speichereInfo();
 }
@@ -409,7 +411,7 @@ long VPBaum::speichereMenge(MerkmalsMenge* m)
 	for (long page : subpages) {
 		result += " " + std::to_string(page);
 	}
-	printf("Generated page %d (%s)\n", loc, result.c_str());
+	spdlog::debug("Generated page {} ({})", loc, result);
 	return loc;
 }
 
@@ -427,8 +429,7 @@ Merkmal* VPBaum::startNNSuche(Merkmal* punkt, float* sigma)
 		T++;
 	}
 
-	//  fprintf(stderr,"Versuche, Knoten, Blätter, Punkte: ");
-	fprintf(stderr, "%d %d %d %d\n", T, K, B, P);
+	spdlog::info("{} tries, {} nodes visited, {} leafs visited, {} patches examined", T, K, B, P);
 	ergebnis->speichern(stdout);
 
 	return ergebnis;
@@ -461,8 +462,7 @@ KArray* VPBaum::kNNSuche(Merkmal* punkt, int k, float* sigma) {
 	// Solange, wie noch nicht genug Nachbarn gefunden sind
 	while (karray->getNum() < MIN(info.merkmalzahl, k));
 
-	//  fprintf(stderr,"Versuche, Knoten, Blätter, Punkte: ");
-	fprintf(stderr, "%d %d %d %d\n", T, K, B, P);
+	spdlog::info("{} tries, {} nodes visited, {} leafs visited, {} patches examined", T, K, B, P);
 	karray->print();
 	return karray;
 }
@@ -566,8 +566,7 @@ void VPBaum::suche(Merkmal* punkt, float* sigma, long position, int MODE, KArray
 		}
 		break;
 	default:
-		fprintf(stderr, "Fehler in Dateistruktur\n");
-		exit(-1);
+		spdlog::error("Fehler in Dateistruktur");
 	}
 
 	// Und die Seite wieder aus dem Speicher löschen
@@ -606,7 +605,7 @@ Merkmal* VPBaum::istBekannt(long pos, Merkmal* punkt)
 		{
 			if (punkt)
 			{
-				fprintf(stderr, "Gibt es schon, Fehler!\n");
+				spdlog::error("Gibt es schon, Fehler!");
 				exit(-1);
 			}
 			return hashmerk[p];
@@ -619,7 +618,7 @@ Merkmal* VPBaum::istBekannt(long pos, Merkmal* punkt)
 
 	if (p == position - 1)
 	{
-		fprintf(stderr, "Hashtabelle voll!\n");
+		spdlog::error("Hashtabelle voll!");
 		exit(-4);
 	}
 

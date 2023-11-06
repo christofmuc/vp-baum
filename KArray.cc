@@ -1,6 +1,7 @@
 #include "KArray.hh"
 
 #include <assert.h>
+#include <spdlog/spdlog.h>
 
 KArray::KArray(int size)
 {
@@ -88,8 +89,9 @@ void KArray::list()
 {
   int i;
 
-  for (i = 0; i < num; i++)
-    fprintf(stdout, "%d %f\n", i, entfernungen[i]);
+  for (i = 0; i < num; i++) {
+      spdlog::info("Item {} distance {}", i, entfernungen[i]);
+  }
 }
 
 void KArray::print()
@@ -98,7 +100,7 @@ void KArray::print()
 
   for (i = 0; i < num; i++)
     {
-      fprintf(stdout, "%d %f ", i, entfernungen[i]);
-      merkmale[i]->speichern(stdout);
+      spdlog::info("Item {} distance {} key {}", i, entfernungen[i], merkmale[i]->schluessel);
+      //merkmale[i]->speichern(stdout);
     }
 }
