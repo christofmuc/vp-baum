@@ -545,8 +545,10 @@ void VPBaum::suche(Merkmal* punkt, float* sigma, long position, int MODE, KArray
 				else
 					// Zweiter Fall: wir suchen die k nächsten Nachbarn
 					// Dann müssen wir jeden Punkt einsortieren
-					if (dist < *sigma)
+					if (dist < *sigma) {
 						karray->insert(gefunden, dist);
+						*sigma = karray->getMaxDist();
+					}
 			}
 
 			if (MODE == NN && lokalesErgebnis != NULL)
