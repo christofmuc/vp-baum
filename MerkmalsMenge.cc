@@ -1,100 +1,101 @@
-#include <stdlib.h> // rand(), RAND_MAX
-
 #include "MerkmalsMenge.hh"
 
 #include "VPBaum.hh"
 
-// MerkmalsMenge::MerkmalsMenge(int n)
-// {
-//   anzahl  = n;
-//   merkmal = new (Merkmal *)[n];
-// }
+#include <stdlib.h> // rand(), RAND_MAX
 
-MerkmalsMenge::MerkmalsMenge(int n, Merkmal **menge)
+
+MerkmalsMenge::MerkmalsMenge(int n, Merkmal** menge)
 {
-  anzahl    = n;
-  dimension = menge[0]->dimension;
-  merkmal   = menge;
+	anzahl = n;
+	dimension = menge[0]->dimension;
+	merkmal.reserve(n);
+	for (int i = 0; i < n; i++) {
+		merkmal.push_back(menge[i]);
+	}
+	delete_merkmale = false;
 }
 
-MerkmalsMenge::MerkmalsMenge(char *filename)
+MerkmalsMenge::MerkmalsMenge(char* filename)
 {
-  FILE *file = fopen(filename, "r");
-  fscanf(file, "%d %d", &anzahl, &dimension);
-  merkmal = new Merkmal*[anzahl];
-
-  for (int i = 0; i < anzahl; i++)
-    merkmal[i] = new Merkmal(file, dimension);
-  fclose(file);
+	FILE* file = fopen(filename, "r");
+	fscanf(file, "%d %d", &anzahl, &dimension);
+	merkmal.reserve(anzahl);
+	for (int i = 0; i < anzahl; i++) {
+		merkmal.push_back(new Merkmal(file, dimension));
+	}
+	fclose(file);
+	delete_merkmale = true;
 }
 
 MerkmalsMenge::MerkmalsMenge(int n, int dim)
 {
-  int i, j;
+	int i, j;
 
-  anzahl     = n;
-  dimension  = dim;
-  merkmal    = new Merkmal *[n];
-
-  for (i = 0; i < n; i++)
-    {
-      merkmal[i]   = new Merkmal(i, dim);
-
-      for (j = 0; j < dim; j++)
-	merkmal[i]->werte[j] = ((float) rand()) / RAND_MAX;
-    }
+	anzahl = n;
+	dimension = dim;
+	merkmal.reserve(n);
+	for (i = 0; i < n; i++)
+	{
+		merkmal.push_back(new Merkmal(i, dim));
+		for (j = 0; j < dim; j++) {
+			merkmal[i]->werte[j] = ((float)rand()) / RAND_MAX;
+		}
+	}
+	delete_merkmale = true;
 }
 
-void MerkmalsMenge::speichern(char *filename)
+void MerkmalsMenge::speichern(char* filename)
 {
-  int   i;
-  FILE *f = fopen(filename, "w");
+	int   i;
+	FILE* f = fopen(filename, "w");
 
-  fprintf(f, "%d %d\n", anzahl, dimension);
-  for (i = 0; i < anzahl; i++)
-    merkmal[i]->speichern(f);
+	fprintf(f, "%d %d\n", anzahl, dimension);
+	for (i = 0; i < anzahl; i++) {
+		merkmal[i]->speichern(f);
+	}
 
-  fclose(f);
+	fclose(f);
 }
 
 MerkmalsMenge::~MerkmalsMenge()
 {
-  delete merkmal;
+	if (delete_merkmale) {
+		for (auto& m : merkmal) {
+			delete m;
+		}
+	}
 }
 
-void test_set(int number, int dim, char *filename)
+void test_set(int number, int dim, char* filename)
 {
-    srand(1);
-    MerkmalsMenge m(number, dim);
-    m.speichern(filename);
+	srand(1);
+	MerkmalsMenge m(number, dim);
+	m.speichern(filename);
 }
 
 
-void vp_generate(char *features, char *filename, int branch, int elements)
+void vp_generate(char* features, char* filename, int branch, int elements)
 {
-    srand(1);
+	srand(1);
 
-    fprintf(stdout, "Lade Merkmalsdatei\n");
-    MerkmalsMenge* m = new MerkmalsMenge(features);
+	fprintf(stdout, "Lade Merkmalsdatei\n");
+	MerkmalsMenge* m = new MerkmalsMenge(features);
 
-    Mass* e = new EuklidMass();
+	fprintf(stdout, "Erzeuge Baum\n");
 
-    fprintf(stdout, "Erzeuge Baum\n");
+	auto baum = new VPBaum(filename, std::make_unique<EuklidMass>(), m->dimension, elements, branch);
 
-    auto baum = new VPBaum(filename, e, m->dimension, elements, branch);
-    
-    {
-        /* Nur die Seitengröße ist angegeben */
-    //    pagesize = atoi(*argv++);
-        //baum = new VPBaum(filename, e, m->dimension, pagesize);
-    }
+	{
+		/* Nur die Seitengröße ist angegeben */
+	//    pagesize = atoi(*argv++);
+		//baum = new VPBaum(filename, e, m->dimension, pagesize);
+	}
 
-    long start = baum->speichereMenge(m);
-    baum->info.startSeite = start;
+	long start = baum->speichereMenge(m);
+	baum->info.startSeite = start;
 
-    fprintf(stderr, "%d %d %d ", baum->info.knotenzahl, baum->info.blattzahl,
-        baum->info.startSeite + baum->seitengroesse);
-    fflush(stdout);
-
-    delete baum;
+	fprintf(stderr, "%d %d %d ", baum->info.knotenzahl, baum->info.blattzahl,
+		baum->info.startSeite + baum->seitengroesse);
+	fflush(stdout);
 }

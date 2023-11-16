@@ -21,9 +21,6 @@
 VPBaum::VPBaum(char* filename)
 {
 	int   id;
-	Seite* s;
-
-	initHash(10000);
 
 	// Oeffnen eines existierenden VP-Baumes auf der Platte
 	baum = fopen(filename, "rb+");
@@ -40,40 +37,38 @@ VPBaum::VPBaum(char* filename)
 	}
 	fread(&seitengroesse, sizeof(int), 1, baum);
 
-	s = new Seite(seitengroesse, baum, 0);
+	Seite seite(seitengroesse, baum, 0);
 
 	// Überlesen der bereits zuvor gelesenen Informationen
-	s->lesen(sizeof(int));
-	s->lesen(sizeof(int));
+	seite.lesen(sizeof(int));
+	seite.lesen(sizeof(int));
 
 	// Lesen der Bauminformationen
-	info = *((struct info*)s->lesen(sizeof(struct info)));
+	info = *((struct info*)seite.lesen(sizeof(struct info)));
 
 	if (info.minsigma == 0.0)
 		info.minsigma = 0.1; // Kludge!
-
-	delete s;
 
 	// Erzeugen des entsprechenden Maßes
 	switch (info.massid)
 	{
 	case 0:
 	case EUKLID:
-		mass = new EuklidMass();
+		mass = std::make_unique<EuklidMass>();
 		break;
 	case CITYBLOCK:
-		mass = new CityblockMass();
+		mass = std::make_unique<CityblockMass>();
 		break;
 	case MAXIMUM:
-		mass = new MaximumsMass();
+		mass = std::make_unique<MaximumsMass>();
 		break;
 	default:
 		spdlog::error("Maßtyp {} nicht bekannt!\n", info.massid);
-		exit(-1);
+		mass = std::make_unique<EuklidMass>();
 	}
 }
 
-VPBaum::VPBaum(char* filename, Mass* mass, int dimension, int seitengroesse)
+VPBaum::VPBaum(char* filename, std::unique_ptr<Mass> mass, int dimension, int seitengroesse)
 {
 	this->seitengroesse = seitengroesse;
 	info.dimension = dimension;
@@ -86,7 +81,7 @@ VPBaum::VPBaum(char* filename, Mass* mass, int dimension, int seitengroesse)
 	info.blattzahl = 0;
 	info.merkmalzahl = 0;
 	info.massid = 0;
-	this->mass = mass;
+	this->mass.swap(mass);
 
 	// Statusseite
 	assert((2 * sizeof(int) + sizeof(struct info)) <= seitengroesse);
@@ -100,8 +95,8 @@ VPBaum::VPBaum(char* filename, Mass* mass, int dimension, int seitengroesse)
 	speichereInfo();
 }
 
-VPBaum::VPBaum(char* filename, Mass* mass, int dimension, int proBlatt,
-	int proKnoten) : mass(nullptr), ergebnis(nullptr), hashtab(nullptr), hashmerk(nullptr)
+VPBaum::VPBaum(char* filename, std::unique_ptr<Mass> mass, int dimension, int proBlatt,
+	int proKnoten) : mass(nullptr), ergebnis(nullptr)
 {
 	info.dimension = dimension;
 	this->seitengroesse = MAX(blattGroesse(proBlatt),
@@ -117,7 +112,7 @@ VPBaum::VPBaum(char* filename, Mass* mass, int dimension, int proBlatt,
 	info.blattzahl = 0;
 	info.merkmalzahl = 0;
 	info.massid = 0;
-	this->mass = mass;
+	this->mass.swap(mass);
 
 	// Man sollte wenigstens ein Element speichern können
 	assert(info.elementeProBlatt >= 1);
@@ -134,9 +129,6 @@ VPBaum::VPBaum(char* filename, Mass* mass, int dimension, int proBlatt,
 
 VPBaum::~VPBaum()
 {
-	delete hashtab;
-	delete hashmerk;
-
 	// Schreiben der Statusseite
 	speichereInfo();
 
@@ -182,7 +174,7 @@ void VPBaum::speichereInfo()
 	s.speichern(baum, 0);
 
 	// Verify
-	auto v = new Seite(seitengroesse, baum, 0);
+	/*auto v = new Seite(seitengroesse, baum, 0);
 	auto vmagic = (int*) v->lesen(sizeof(int));
 	assert(*vmagic == magic);
 	auto vgroesse = (int*)v->lesen(sizeof(int));
@@ -190,7 +182,7 @@ void VPBaum::speichereInfo()
 	auto vinfo = (struct info*)v->lesen(sizeof(struct info));
 	assert(vinfo->blaetterProKnoten == info.blaetterProKnoten);	
 	assert(vinfo->merkmalzahl== info.merkmalzahl);	
-	assert(vinfo->massid == info.massid);	
+	assert(vinfo->massid == info.massid);	*/
 }
 
 void VPBaum::baumInfo()
@@ -292,33 +284,31 @@ void VPBaum::distanzSort(double* dist, Merkmal** merkmal, int l, int r)
 long VPBaum::schreibeMenge(MerkmalsMenge* m)
 {
 	long  loc;
-	Seite* s = new Seite(seitengroesse);
+	Seite seite(seitengroesse);
 
-	assert(s != NULL);                     // Speicheranforderung klappt immer
 	assert(m != NULL);                     // Der Parameter stimmt auch
 	assert(m->anzahl <= info.elementeProBlatt); // Und niemals werden zuviele
 	// Elemente in ein Blatt gequetscht
 
-	s->schreiben(2);                       // Schreiben der Kennung 
-	s->schreiben(m->anzahl);               // Schreiben der Anzahl
+	seite.schreiben(2);                       // Schreiben der Kennung 
+	seite.schreiben(m->anzahl);               // Schreiben der Anzahl
 	info.merkmalzahl += m->anzahl;
 
 	// Schreiben der einzelnen Schluessel
 	for (int i = 0; i < m->anzahl; i++)
 	{
-		s->schreiben(m->merkmal[i]->schluessel);
-		s->schreiben(m->merkmal[i]->werte, sizeof(float) * info.dimension);
+		seite.schreiben(m->merkmal[i]->schluessel);
+		seite.schreiben(m->merkmal[i]->werte.data(), sizeof(float) * info.dimension);
 	}
 
 	// Und als letztes das Speichern auf der Festplatte
-	loc = s->anhaengen(baum);
+	loc = seite.anhaengen(baum);
 	info.blattzahl++;
 
 	// Verify
-	auto v = new Seite(seitengroesse, baum, loc);
-	assert(2 == *(int*)v->lesen(sizeof(int)));
+	//auto v = new Seite(seitengroesse, baum, loc);
+	//assert(2 == *(int*)v->lesen(sizeof(int)));
 
-	delete s;
 	return loc;
 }
 
@@ -327,14 +317,12 @@ long VPBaum::speichereMenge(MerkmalsMenge* m)
 	int i, num, elem, pos;
 	int            b;
 
-	MerkmalsMenge* menge;
 	Merkmal** merkmale;
 	int* blaetter;
 	float* sigma;
 	long           loc;
 
 	Merkmal* vp;
-	double* dist;
 
 	assert(m != NULL); // Natürlich wird immer ein Parameter angegeben
 
@@ -343,26 +331,27 @@ long VPBaum::speichereMenge(MerkmalsMenge* m)
 		return schreibeMenge(m);
 
 	// Das passt nicht - also Split notwendig!
-	Seite* s = new Seite(seitengroesse);
-	assert(s != NULL);                     // Speicheranforderung klappt immer
-	s->schreiben(1);    // Schreiben der Kennung 
-	blaetter = (int*)s->schreiben(1);    // Schreiben der Anzahl
-	sigma = (float*)s->schreiben(0.0f);  // Schreiben des minSigmas
+	Seite seite(seitengroesse);
+	seite.schreiben(1);    // Schreiben der Kennung 
+	blaetter = (int*)seite.schreiben(1);    // Schreiben der Anzahl
+	sigma = (float*)seite.schreiben(0.0f);  // Schreiben des minSigmas
 
 	// Erst wird der Vantage Point bestimmt
 	vp = waehleVantagePoint(m);
-	s->schreiben(vp->werte, sizeof(float) * info.dimension);
+	seite.schreiben(vp->werte.data(), sizeof(float) * info.dimension);
 
 	// Jetzt wird der Abstand aller Punkte zu dem VantagePoint berechnet
-	dist = new double[m->anzahl];
-	for (i = 0; i < m->anzahl; i++)
+	std::vector<double> dist;
+	dist.resize(m->anzahl);
+	for (i = 0; i < m->anzahl; i++) {
 		dist[i] = mass->d(vp, m->merkmal[i]);
+	}
 
 	// Sortieren der Punkte nach dem Abstand zum VP 
-	distanzSort(dist, m->merkmal, 0, m->anzahl - 1);
+	distanzSort(dist.data(), m->merkmal.data(), 0, m->anzahl - 1);
 
 	// Splitte in n Teile der Groesse m->anzahl / n 
-	merkmale = m->merkmal;
+	merkmale = m->merkmal.data();
 	num = m->anzahl;
 	b = MIN(info.blaetterProKnoten,
 		(int)ceil(num / (double)info.elementeProBlatt));
@@ -373,7 +362,7 @@ long VPBaum::speichereMenge(MerkmalsMenge* m)
 	{
 		// Bilde aus den naechsten elem Merkmalen eine neue Merkmalsmenge
 		if (num < elem) elem = num;
-		menge = new MerkmalsMenge(elem, merkmale);
+		MerkmalsMenge menge(elem, merkmale);
 		num -= elem;
 		pos += elem;
 		merkmale += elem;
@@ -381,32 +370,31 @@ long VPBaum::speichereMenge(MerkmalsMenge* m)
 		if (pos == m->anzahl) {
 			// Dies ist der Rest, als Intervallgrenze die maximale  Entfernung
 			// benutzen
-			s->schreiben((float)dist[pos - 1]);
+			seite.schreiben((float)dist[pos - 1]);
 		}
 		else
 		{
 			float  d = fabs(dist[pos - 1] - dist[pos]) / 2.0;
 			*sigma = MAX(*sigma, d);
-			s->schreiben((float)((dist[pos - 1] + dist[pos]) / 2.0));
+			seite.schreiben((float)((dist[pos - 1] + dist[pos]) / 2.0));
 		}
-		long subpage = speichereMenge(menge);
-		s->schreiben(subpage);
+		long subpage = speichereMenge(&menge);
+		seite.schreiben(subpage);
 		subpages.push_back(subpage);
 	}
 	info.minsigma = MAX(*sigma, info.minsigma);
 	*blaetter = b;
 
-	loc = s->anhaengen(baum);
+	loc = seite.anhaengen(baum);
 	info.knotenzahl++;
 
 	// Verify
-	auto v = new Seite(seitengroesse, baum, loc);
+	/*auto v = new Seite(seitengroesse, baum, loc);
 	assert(1 == *(int*)v->lesen(sizeof(int)));
 	assert(*blaetter == *(int*)v->lesen(sizeof(int)));
-	float sigmastored = *(float*)v->lesen(sizeof(float));
+	float sigmastored = *(float*)v->lesen(sizeof(float));*/
 //	assert(sigmaVerify == sigmastored);
 
-	delete s;
 	std::string result;
 	for (long page : subpages) {
 		result += " " + std::to_string(page);
@@ -445,22 +433,11 @@ Merkmal* VPBaum::startKNNSuche(Merkmal* punkt, int k, float* sigma)
 
 KArray* VPBaum::kNNSuche(Merkmal* punkt, int k, float* sigma) {
 	T = K = B = P = 0;
-	KArray* karray{nullptr};
-	do
-	{
-		// Löschen des Ergebnisfeldes und Anlegen eines neuen
-		delete karray;
-		karray = new KArray(k);
+	
+	KArray* karray = new KArray(k);
 
-		// Start der Suche
-		suche(punkt, sigma, info.startSeite, KNN, karray);
-
-		// Anpassen des Sigmas für den nächsten Versuch
-		*sigma *= 2;
-		T++;
-	}
-	// Solange, wie noch nicht genug Nachbarn gefunden sind
-	while (karray->getNum() < MIN(info.merkmalzahl, k));
+	// Start der Suche
+	suche(punkt, sigma, info.startSeite, KNN, karray);
 
 	spdlog::info("{} tries, {} nodes visited, {} leafs visited, {} patches examined", T, K, B, P);
 	karray->print();
@@ -477,19 +454,19 @@ void VPBaum::suche(Merkmal* punkt, float* sigma, long position, int MODE, KArray
 	float   minsigma;
 	long    neupos;
 
-	Seite* s = new Seite(seitengroesse, baum, position);
+	Seite seite(seitengroesse, baum, position);
 
-	switch (*((int*)s->lesen(sizeof(int))))
+	switch (*((int*)seite.lesen(sizeof(int))))
 	{
 	case 1:
 		// Innerer Knoten des Baums
 		K++;
-		blaetter = *((int*)s->lesen(sizeof(int)));
-		minsigma = *((float*)s->lesen(sizeof(float)));
+		blaetter = *((int*)seite.lesen(sizeof(int)));
+		minsigma = *((float*)seite.lesen(sizeof(float)));
 
 		// Jetzt den VantagePoint erzeugen
 		vp = new Merkmal(0, info.dimension);
-		vp->setValues((float*)s->lesen(sizeof(float) * info.dimension));
+		vp->setValues((float*)seite.lesen(sizeof(float) * info.dimension));
 
 		// Den Abstand unseres Suchpunktes zum VantagePoint berechnen
 		dist = mass->d(punkt, vp);
@@ -498,8 +475,8 @@ void VPBaum::suche(Merkmal* punkt, float* sigma, long position, int MODE, KArray
 		mu1 = 0.0;
 		for (i = 0; i < blaetter; i++)
 		{
-			mu2 = *((float*)s->lesen(sizeof(float)));
-			neupos = *((long*)s->lesen(sizeof(long)));
+			mu2 = *((float*)seite.lesen(sizeof(float)));
+			neupos = *((long*)seite.lesen(sizeof(long)));
 
 			// Überprüfen, ob das Intervall in Frage kommt
 			if ((mu1 - *sigma < dist) && (dist <= mu2 + *sigma))
@@ -510,7 +487,7 @@ void VPBaum::suche(Merkmal* punkt, float* sigma, long position, int MODE, KArray
 		break;
 	case 2:
 		// Ein Blatt
-		punkte = *((int*)s->lesen(sizeof(int)));
+		punkte = *((int*)seite.lesen(sizeof(int)));
 
 		// Wurde diese Blatt bereits einmal bearbeitet?
 		lokalesErgebnis = NULL; // istBekannt(position);
@@ -524,9 +501,9 @@ void VPBaum::suche(Merkmal* punkt, float* sigma, long position, int MODE, KArray
 			for (i = 0; i < punkte; i++)
 			{
 				// Erzeugen des neuen Punktes
-				sch = *((int*)s->lesen(sizeof(int)));
+				sch = *((int*)seite.lesen(sizeof(int)));
 				gefunden = new Merkmal(sch, info.dimension);
-				gefunden->setValues((float*) s->lesen(sizeof(float) * info.dimension));
+				gefunden->setValues((float*)seite.lesen(sizeof(float) * info.dimension));
 
 				// Berechnen der Distanz zum Suchpunkt
 				P++;
@@ -550,10 +527,6 @@ void VPBaum::suche(Merkmal* punkt, float* sigma, long position, int MODE, KArray
 						*sigma = karray->getMaxDist();
 					}
 			}
-
-			if (MODE == NN && lokalesErgebnis != NULL)
-				// Und in der Hashtabelle merken!
-				jetztBekannt(position, lokalesErgebnis);
 		}
 
 		if (MODE == NN && lokalesErgebnis != NULL)
@@ -570,74 +543,7 @@ void VPBaum::suche(Merkmal* punkt, float* sigma, long position, int MODE, KArray
 	default:
 		spdlog::error("Fehler in Dateistruktur");
 	}
-
-	// Und die Seite wieder aus dem Speicher löschen
-	delete s;
-	// Ups - geht nicht mehr wegen der Hashtabelle
 }
-
-//
-// Funktionen der Hashing-Tabelle
-// Dies merkt sich, welche Seiten bereits berechnet wurden.
-// Wird bei einem erneuten Versuch eine Seite zum zweitenmal getroffen,
-// braucht nichts getan zu werden, dies wird ja kein neues Ergebnis 
-// liefern.
-//
-
-void VPBaum::initHash(int size)
-{
-	hashSize = size;
-	hashtab = new int[size];
-	for (int i = 0; i < size; ++i) {
-		hashtab[i] = -1;
-	}
-	hashmerk = new Merkmal * [size];
-}
-
-Merkmal* VPBaum::istBekannt(long pos, Merkmal* punkt)
-{
-	// Hashfunktion berechnen
-	int p;
-	int position = pos % hashSize;
-
-	for (p = position; (hashtab[p] != 0) && (p != position - 1);
-		p = (p + 1) % hashSize)
-	{
-		if (hashtab[p] == pos)
-		{
-			if (punkt)
-			{
-				spdlog::error("Gibt es schon, Fehler!");
-				exit(-1);
-			}
-			return hashmerk[p];
-		}
-		else if (hashtab[p] == -1) {
-			// Eintrag frei, break
-			break;
-		}
-	}
-
-	if (p == position - 1)
-	{
-		spdlog::error("Hashtabelle voll!");
-		exit(-4);
-	}
-
-	if (!punkt)
-		return NULL;
-
-	hashtab[p] = pos;
-	hashmerk[p] = punkt;
-	return punkt;
-}
-
-// Funktion zum Einfuegen
-void VPBaum::jetztBekannt(long pos, Merkmal* punkt)
-{
-	istBekannt(pos, punkt);
-}
-
 
 void vp_search(char* indexname, float* params, int dim)
 {

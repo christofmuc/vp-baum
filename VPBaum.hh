@@ -9,6 +9,8 @@
 
 #include "KArray.hh"
 
+#include <memory>
+
 #define NN  0
 #define KNN 1
 
@@ -19,7 +21,7 @@ public:
 
 private:
     int magic = 0x020870;
-  Mass *mass{nullptr};
+  std::unique_ptr<Mass> mass;
 
   int  T, B, K, P;
 
@@ -36,15 +38,6 @@ private:
   long schreibeMenge(MerkmalsMenge *m);
 
   void suche(Merkmal *punkt, float *sigma, long position, int MODE, KArray* karray = nullptr);
-
-  // Die Hashtabelle, die bereits durchsuchte Blätter merkt
-  int hashSize;
-  int *hashtab{ nullptr };
-  Merkmal **hashmerk{ nullptr };
-
-  void initHash(int size);
-  Merkmal *istBekannt(long pos, Merkmal *punkt = NULL);
-  void jetztBekannt(long pos, Merkmal *punkt);
 
 public:
   int seitengroesse;
@@ -68,11 +61,11 @@ public:
   VPBaum(char *filename);
 
   // Erzeugen eines neuen Indexes mit Angabe der Seitengröße
-  VPBaum(char *filename, Mass *mass, int dimension, int seitengroesse);
+  VPBaum(char *filename, std::unique_ptr<Mass> mass, int dimension, int seitengroesse);
 
   // Erzeugen eines neuen Indexes mit Angabe von Verzweigungsgrad
   // und Speicherkapazität der Blätter
-  VPBaum(char *filename, Mass *mass, int dimension, int proBlatt,
+  VPBaum(char *filename, std::unique_ptr<Mass> mass, int dimension, int proBlatt,
 	 int proKnoten);
 
   // Destruktor

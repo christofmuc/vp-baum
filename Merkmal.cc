@@ -2,44 +2,34 @@
 
 Merkmal::Merkmal(int sch, int dim)
 {
-  dimension  = dim;
-  schluessel = sch;
-  werte      = new float[dim];
+	dimension = dim;
+	schluessel = sch;
+	werte.resize(dim, 0.0f);
 }
 
-/*Merkmal::Merkmal(int sch, int dim, float* w)
+Merkmal::Merkmal(FILE* file, int dim)
 {
-  schluessel = sch;
-  dimension  = dim;
-  werte      = w;
-}*/
-
-Merkmal::Merkmal(FILE *file, int dim)
-{
-  dimension = dim;
-  fscanf(file, "%d", &schluessel);
-  werte     = new float[dimension];
-  for (int i = 0; i < dim; i++)
-    fscanf(file, "%f", &werte[i]);
+	dimension = dim;
+	fscanf(file, "%d", &schluessel);
+	werte.resize(dim, 0.0f);
+	for (int i = 0; i < dim; i++) {
+		fscanf(file, "%f", &werte[i]);
+	}
 }
 
 void Merkmal::setValues(float* w) {
-    for (int i = 0; i < dimension; i++)
-        werte[i] = w[i];
+	for (int i = 0; i < dimension; i++) {
+		werte[i] = w[i];
+	}
 }
 
-Merkmal::~Merkmal()
+void Merkmal::speichern(FILE* f)
 {
-  delete werte;
+	int i;
+
+	fprintf(f, "%d", schluessel);
+	for (i = 0; i < dimension; i++) {
+		fprintf(f, " %f", werte[i]);
+	}
+	fprintf(f, "\n");
 }
-
-void Merkmal::speichern(FILE *f)
-{
-  int i;
-
-  fprintf(f, "%d", schluessel);
-  for (i = 0; i < dimension; i++)
-    fprintf(f, " %f",werte[i]);
-  fprintf(f, "\n");
-}
-

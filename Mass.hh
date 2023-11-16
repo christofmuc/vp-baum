@@ -15,6 +15,7 @@ public:
   int D  = 0;
 
   virtual double d(Merkmal *a, Merkmal *b) = 0;
+  virtual ~Mass() = default;
 };
 
 class EuklidMass : public Mass
